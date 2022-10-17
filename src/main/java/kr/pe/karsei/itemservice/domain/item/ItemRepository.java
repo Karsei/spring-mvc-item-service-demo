@@ -9,8 +9,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Repository
 public class ItemRepository {
-    private static final Map<Long, Item> store = new ConcurrentHashMap<>();
-    private static long  sequence = 0L;
+    private static final Map<Long, Item> store = new ConcurrentHashMap<>(); // 예시를 위함
+    private static long sequence = 0L;
 
     public Item save(Item item) {
         item.setId(++sequence);
