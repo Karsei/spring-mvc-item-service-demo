@@ -8,31 +8,31 @@
             max-width: 560px;
         }
     </style>
-    <title>상품 수정</title>
+    <title th:text="#{page.updateItem}">상품 수정</title>
 </head>
 <body>
 <div class="container">
     <div class="py-5 text-center">
-        <h2>상품 수정 폼</h2>
+        <h2 th:text="#{page.updateItem}">상품 수정 폼</h2>
     </div>
     <form th:action action="item.html" method="post" th:object="${item}">
         <div>
-            <label for="id">상품 ID</label>
+            <label for="id" th:text="#{label.item.id}">상품 ID</label>
             <input type="text" id="id" name="id" class="form-control" value="1" th:field="*{id}"
                    readonly>
         </div>
         <div>
-            <label for="itemName">상품명</label>
+            <label for="itemName" th:text="#{label.item.itemName}">상품명</label>
             <input type="text" id="itemName" name="itemName" class="formcontrol" th:field="*{itemName}"
                    value="상품A">
         </div>
         <div>
-            <label for="price">가격</label>
+            <label for="price" th:text="#{label.item.price}">가격</label>
             <input type="text" id="price" name="price" class="form-control" th:field="*{price}"
                    value="10000">
         </div>
         <div>
-            <label for="quantity">수량</label>
+            <label for="quantity" th:text="#{label.item.quantity}">수량</label>
             <input type="text" id="quantity" name="quantity" class="formcontrol" th:field="*{quantity}"
                    value="10">
         </div>
@@ -76,13 +76,13 @@
         <hr class="my-4">
         <div class="row">
             <div class="col">
-                <button class="w-100 btn btn-primary btn-lg" type="submit">저장
+                <button class="w-100 btn btn-primary btn-lg" type="submit" th:text="#{button.save}">저장
                 </button>
             </div>
             <div class="col">
                 <button class="w-100 btn btn-secondary btn-lg"
                         th:onclick="|location.href='@{/basic/items/{itemId}(itemId=${item.id})}'|"
-                        onclick="location.href='item.html'" type="button">취소</button>
+                        onclick="location.href='item.html'" type="button" th:text="#{button.cancel}">취소</button>
             </div>
         </div>
     </form>
