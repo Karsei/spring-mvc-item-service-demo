@@ -8,13 +8,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
-import org.springframework.validation.ObjectError;
-import org.springframework.validation.ValidationUtils;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -30,12 +25,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class BasicItemControllerV3 {
     private final ItemRepository itemRepository;
-    private final ItemValidator itemValidator;
-
-    @InitBinder
-    public void init(WebDataBinder dataBinder) {
-        dataBinder.addValidators(itemValidator);
-    }
 
     @GetMapping
     public String items(Model model) {
@@ -58,137 +47,17 @@ public class BasicItemControllerV3 {
         return "validation/v3/addForm";
     }
 
-    //@PostMapping("/add")
-    public String addItemV2(@ModelAttribute Item item,
-                            BindingResult bindingResult, // @ModalAttribute 바로 다음에 와야함 
-                            RedirectAttributes redirectAttributes) {
-        // 검증
-        if (!StringUtils.hasText(item.getItemName())) {
-            bindingResult.addError(new FieldError("item", "itemName", "상품 이름은 필수입니다."));
-        }
-        if (item.getPrice() == null || item.getPrice() < 1000 || item.getPrice() > 1000000) {
-            bindingResult.addError(new FieldError("item", "price", "가격은 1,000 ~ 1,000,000원까지만 가능합니다."));
-        }
-        if (item.getQuantity() == null || item.getQuantity() >= 9999) {
-            bindingResult.addError(new FieldError("item", "quantity", "수량은 최대 9,999개까지 가능합니다."));
-        }
+    @PostMapping("/add")
+    public String addItem(@Validated @ModelAttribute Item item,
+                          BindingResult bindingResult, // @ModalAttribute 바로 다음에 와야함
+                          RedirectAttributes redirectAttributes) {
         if (item.getPrice() != null && item.getQuantity() != null) {
             int calPrice = item.getPrice() * item.getQuantity();
             if (calPrice < 10000) {
-                bindingResult.addError(new ObjectError("item", "가격 * 수량의 합은 10,000원 이상이어야 합니다. (현재 값 = " + calPrice + ")"));
-            }
-        }
-        // 실패 시 다시 입력 폼으로
-        if (bindingResult.hasErrors()) {
-            log.info("errors = {}", bindingResult);
-            return "validation/v3/addForm";
-        }
-
-        Item savedItem = itemRepository.save(item);
-        redirectAttributes.addAttribute("itemId", savedItem.getId());
-        redirectAttributes.addAttribute("status", true);
-
-        return "redirect:/validation/v3/items/{itemId}"; // ?status=true
-    }
-
-    //@PostMapping("/add")
-    public String addItemV3(@ModelAttribute Item item,
-                            BindingResult bindingResult, // @ModalAttribute 바로 다음에 와야함
-                            RedirectAttributes redirectAttributes) {
-        log.info("objectName = {}", bindingResult.getObjectName()); // objectName=item //@ModelAttribute name
-        log.info("target = {}", bindingResult.getTarget()); // target=Item(id=null, itemName=상품, price=100, quantity=1234)
-
-        // 검증
-        if (!StringUtils.hasText(item.getItemName())) {
-            bindingResult.addError(new FieldError("item", "itemName", "상품 이름은 필수입니다.", false, new String[]{"required.item.itemName"}, null, "상품 이름은 필수입니다."));
-        }
-        if (item.getPrice() == null || item.getPrice() < 1000 || item.getPrice() > 1000000) {
-            bindingResult.addError(new FieldError("item", "price", "가격은 1,000 ~ 1,000,000원까지만 가능합니다.", false, new String[]{"range.item.price"}, new Object[]{1000, 1000000}, "가격은 {0} ~ {1} 까지 허용합니다."));
-        }
-        if (item.getQuantity() == null || item.getQuantity() >= 9999) {
-            bindingResult.addError(new FieldError("item", "quantity", "수량은 최대 9,999개까지 가능합니다.", false, new String[]{"max.item.quantity"}, new Object[]{9999}, "수량은 최대 {0} 까지 허용합니다."));
-        }
-        if (item.getPrice() != null && item.getQuantity() != null) {
-            int calPrice = item.getPrice() * item.getQuantity();
-            if (calPrice < 10000) {
-                bindingResult.addError(new ObjectError("item", new String[]{"totalPriceMin"}, new Object[]{10000, calPrice}, "가격 * 수량의 합은 10,000원 이상이어야 합니다. (현재 값 = " + calPrice + ")"));
-            }
-        }
-        // 실패 시 다시 입력 폼으로
-        if (bindingResult.hasErrors()) {
-            log.info("errors = {}", bindingResult);
-            return "validation/v3/addForm";
-        }
-
-        Item savedItem = itemRepository.save(item);
-        redirectAttributes.addAttribute("itemId", savedItem.getId());
-        redirectAttributes.addAttribute("status", true);
-
-        return "redirect:/validation/v3/items/{itemId}"; // ?status=true
-    }
-
-    //@PostMapping("/add")
-    public String addItemV4(@ModelAttribute Item item,
-                            BindingResult bindingResult, // @ModalAttribute 바로 다음에 와야함
-                            RedirectAttributes redirectAttributes) {
-        log.info("objectName = {}", bindingResult.getObjectName()); // objectName=item //@ModelAttribute name
-        log.info("target = {}", bindingResult.getTarget()); // target=Item(id=null, itemName=상품, price=100, quantity=1234)
-
-        // 검증
-        if (!StringUtils.hasText(item.getItemName())) {
-            bindingResult.rejectValue("itemName", "required"); // "required.item.itemName"
-        }
-        ValidationUtils.rejectIfEmptyOrWhitespace(bindingResult, "itemName", "required");
-
-        if (item.getPrice() == null || item.getPrice() < 1000 || item.getPrice() > 1000000) {
-            bindingResult.rejectValue("price", "range", new Object[]{1000, 1000000}, null); // "range.item.price"
-        }
-        if (item.getQuantity() == null || item.getQuantity() >= 9999) {
-            bindingResult.rejectValue("quantity", "max", new Object[]{9999}, null); // "max.item.quantity"
-        }
-        if (item.getPrice() != null && item.getQuantity() != null) {
-            int calPrice = item.getPrice() * item.getQuantity();
-            if (calPrice < 10000) {
-                bindingResult.addError(new ObjectError("item", new String[]{"totalPriceMin"}, new Object[]{10000, calPrice}, "가격 * 수량의 합은 10,000원 이상이어야 합니다. (현재 값 = " + calPrice + ")"));
                 bindingResult.reject("totalPriceMin");
             }
         }
-        // 실패 시 다시 입력 폼으로
-        if (bindingResult.hasErrors()) {
-            log.info("errors = {}", bindingResult);
-            return "validation/v3/addForm";
-        }
 
-        Item savedItem = itemRepository.save(item);
-        redirectAttributes.addAttribute("itemId", savedItem.getId());
-        redirectAttributes.addAttribute("status", true);
-
-        return "redirect:/validation/v3/items/{itemId}"; // ?status=true
-    }
-
-    //@PostMapping("/add")
-    public String addItemV5(@ModelAttribute Item item,
-                            BindingResult bindingResult, // @ModalAttribute 바로 다음에 와야함
-                            RedirectAttributes redirectAttributes) {
-        itemValidator.validate(item, bindingResult);
-
-        // 실패 시 다시 입력 폼으로
-        if (bindingResult.hasErrors()) {
-            log.info("errors = {}", bindingResult);
-            return "validation/v3/addForm";
-        }
-
-        Item savedItem = itemRepository.save(item);
-        redirectAttributes.addAttribute("itemId", savedItem.getId());
-        redirectAttributes.addAttribute("status", true);
-
-        return "redirect:/validation/v3/items/{itemId}"; // ?status=true
-    }
-
-    @PostMapping("/add")
-    public String addItemV6(@Validated @ModelAttribute Item item,
-                            BindingResult bindingResult, // @ModalAttribute 바로 다음에 와야함
-                            RedirectAttributes redirectAttributes) {
         // 실패 시 다시 입력 폼으로
         if (bindingResult.hasErrors()) {
             log.info("errors = {}", bindingResult);
@@ -212,7 +81,20 @@ public class BasicItemControllerV3 {
 
     @PostMapping("/{itemId}/edit")
     public String edit(@PathVariable Long itemId,
-                       @ModelAttribute Item item) {
+                       @Validated @ModelAttribute Item item,
+                       BindingResult bindingResult) {
+        if (item.getPrice() != null && item.getQuantity() != null) {
+            int calPrice = item.getPrice() * item.getQuantity();
+            if (calPrice < 10000) {
+                bindingResult.reject("totalPriceMin");
+            }
+        }
+
+        if (bindingResult.hasErrors()) {
+            log.info("errors = {}", bindingResult);
+            return "validation/v3/editForm";
+        }
+
         itemRepository.update(itemId, item);
         return "redirect:/validation/v3/items/{itemId}";
     }

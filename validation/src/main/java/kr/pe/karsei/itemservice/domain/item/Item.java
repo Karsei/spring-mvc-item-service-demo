@@ -3,6 +3,7 @@ package kr.pe.karsei.itemservice.domain.item;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.validator.constraints.Range;
+import org.hibernate.validator.constraints.ScriptAssert;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.NotBlank;
@@ -11,6 +12,11 @@ import java.util.List;
 
 @Getter
 @Setter
+//@ScriptAssert(
+//        lang = "javascript",
+//        script = "_this.price * _this.quantity >= 10000",
+//        message = "총합이 10000원 넘게 입력해주세요."
+//)
 public class Item {
     private Long id;
 
