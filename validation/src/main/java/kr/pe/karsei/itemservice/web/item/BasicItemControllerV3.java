@@ -1,9 +1,6 @@
 package kr.pe.karsei.itemservice.web.item;
 
-import kr.pe.karsei.itemservice.domain.item.DeliveryCode;
-import kr.pe.karsei.itemservice.domain.item.Item;
-import kr.pe.karsei.itemservice.domain.item.ItemRepository;
-import kr.pe.karsei.itemservice.domain.item.ItemType;
+import kr.pe.karsei.itemservice.domain.item.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
@@ -47,10 +44,34 @@ public class BasicItemControllerV3 {
         return "validation/v3/addForm";
     }
 
-    @PostMapping("/add")
+    //@PostMapping("/add")
     public String addItem(@Validated @ModelAttribute Item item,
                           BindingResult bindingResult, // @ModalAttribute 바로 다음에 와야함
                           RedirectAttributes redirectAttributes) {
+        if (item.getPrice() != null && item.getQuantity() != null) {
+            int calPrice = item.getPrice() * item.getQuantity();
+            if (calPrice < 10000) {
+                bindingResult.reject("totalPriceMin");
+            }
+        }
+
+        // 실패 시 다시 입력 폼으로
+        if (bindingResult.hasErrors()) {
+            log.info("errors = {}", bindingResult);
+            return "validation/v3/addForm";
+        }
+
+        Item savedItem = itemRepository.save(item);
+        redirectAttributes.addAttribute("itemId", savedItem.getId());
+        redirectAttributes.addAttribute("status", true);
+
+        return "redirect:/validation/v3/items/{itemId}"; // ?status=true
+    }
+
+    @PostMapping("/add")
+    public String addItemV2(@Validated(SaveCheck.class) @ModelAttribute Item item,
+                            BindingResult bindingResult, // @ModalAttribute 바로 다음에 와야함
+                            RedirectAttributes redirectAttributes) {
         if (item.getPrice() != null && item.getQuantity() != null) {
             int calPrice = item.getPrice() * item.getQuantity();
             if (calPrice < 10000) {
@@ -79,10 +100,30 @@ public class BasicItemControllerV3 {
         return "validation/v3/editForm";
     }
 
-    @PostMapping("/{itemId}/edit")
+    //@PostMapping("/{itemId}/edit")
     public String edit(@PathVariable Long itemId,
                        @Validated @ModelAttribute Item item,
                        BindingResult bindingResult) {
+        if (item.getPrice() != null && item.getQuantity() != null) {
+            int calPrice = item.getPrice() * item.getQuantity();
+            if (calPrice < 10000) {
+                bindingResult.reject("totalPriceMin");
+            }
+        }
+
+        if (bindingResult.hasErrors()) {
+            log.info("errors = {}", bindingResult);
+            return "validation/v3/editForm";
+        }
+
+        itemRepository.update(itemId, item);
+        return "redirect:/validation/v3/items/{itemId}";
+    }
+
+    @PostMapping("/{itemId}/edit")
+    public String editV2(@PathVariable Long itemId,
+                         @Validated(UpdateCheck.class) @ModelAttribute Item item,
+                         BindingResult bindingResult) {
         if (item.getPrice() != null && item.getQuantity() != null) {
             int calPrice = item.getPrice() * item.getQuantity();
             if (calPrice < 10000) {
